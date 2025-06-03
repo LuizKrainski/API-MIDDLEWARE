@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Usuários e BrasilAPI</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #181818; color: #f1f1f1; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 20px auto; background: #232323; padding: 32px 24px; border-radius: 10px; box-shadow: 0 2px 16px #0008; }
+        h2, h3 { text-align: center; color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px; border-bottom: 1px solid #333; text-align: left; }
+        th { background: #222; }
+        .error { color: #ff4d4d; margin-top: 10px; text-align: center; }
+        .brasilapi-section { margin-top: 40px; border-top: 1px solid #444; padding-top: 20px; }
+        .search-form { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-form input[type="text"] { flex-grow: 1; padding: 8px; border-radius: 4px; border: none; background: #333; color: #fff; }
+        .search-form button { padding: 8px 15px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .search-form button:hover { background: #0056b3; }
+        .data-display { background: #333; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; }
+        .data-list { max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Dashboard de Usuários</h2>
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Idade</th>
+                    <th>Cidade</th>
+                    <th>Banco</th>
+                    <th>Telefone</th>
+                    <th>Recebido em</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="error" id="dashboard-error"></div>
+
+        <!-- Seções da BrasilAPI -->
+        <div class="brasilapi-section">
+            <h3>Consulta de CEP</h3>
+            <div class="search-form">
+                <input type="text" id="cep-input" placeholder="Digite o CEP">
+                <button onclick="searchCEP()">Buscar CEP</button>
+            </div>
+            <div class="data-display" id="cep-data"></div>
+        </div>
+
+        <div class="brasilapi-section">
+            <h3>Lista de Bancos</h3>
+            <button onclick="loadBanks()">Carregar Bancos</button>
+            <div class="data-list" id="banks-data"></div>
+        </div>
+
+        <div class="brasilapi-section">
+            <h3>Consulta de CNPJ</h3>
+            <div class="search-form">
+                <input type="text" id="cnpj-input" placeholder="Digite o CNPJ">
+                <button onclick="searchCNPJ()">Buscar CNPJ</button>
+            </div>
+            <div class="data-display" id="cnpj-data"></div>
+        </div>
+
+        <div class="brasilapi-section">
+            <h3>Taxas de Câmbio</h3>
+            <button onclick="loadRates()">Carregar Taxas</button>
+            <div class="data-list" id="rates-data"></div>
+        </div>
+
+        <div class="brasilapi-section">
+            <h3>Registro de Domínio .br</h3>
+            <div class="search-form">
+                <input type="text" id="dominio-input" placeholder="Digite o Domínio (ex: google.com.br)">
+                <button onclick="searchDominio()">Buscar Domínio</button>
+            </div>
+            <div class="data-display" id="dominio-data"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Carrega usuários (função existente)
+        async function loadUsers() {
+            const errorDiv = document.getElementById('dashboard-error');
+            errorDiv.textContent = '';
+            try {
+                const res = await fetch('/dashboard/data');
+                const users = await res.json();
+                const tbody = document.querySelector('#users-table tbody');
+                tbody.innerHTML = '';
+                if (!Array.isArray(users) || users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7">Nenhum usuário cadastrado ainda.</td></tr>';
+                    return;
+                }
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.name || ''}</td>
+                        <td>${user.email || ''}</td>
+                        <td>${user.age || ''}</td>
+                        <td>${user.city || ''}</td>
+                        <td>${user.bank || ''}</td>
+                        <td>${user.phone || ''}</td>
+                        <td>${user.created_at ? new Date(user.created_at).toLocaleString() : ''}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                errorDiv.textContent = 'Erro ao carregar usuários';
+            }
+        }
+
+        // Funções para carregar dados da BrasilAPI
+
+        async function searchCEP() {
+            const cep = document.getElementById('cep-input').value.replace(/[^0-9]/g, ''); // Remove non-digits
+            const cepDataDiv = document.getElementById('cep-data');
+            cepDataDiv.textContent = 'Carregando...';
+            try {
+                const res = await fetch(`/brasilapi/cep/${cep}`);
+                const data = await res.json();
+                if (res.ok) {
+                    cepDataDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    cepDataDiv.textContent = data.message || data.error || 'CEP não encontrado';
+                }
+            } catch (err) {
+                cepDataDiv.textContent = 'Erro ao buscar CEP';
+            }
+        }
+
+        async function loadBanks() {
+            const banksDataDiv = document.getElementById('banks-data');
+            banksDataDiv.textContent = 'Carregando...';
+            try {
+                const res = await fetch('/brasilapi/banks');
+                const data = await res.json();
+                if (res.ok && Array.isArray(data)) {
+                    banksDataDiv.innerHTML = data.map(bank => `<p><strong>${bank.code}</strong> - ${bank.name}</p>`).join('');
+                } else {
+                    banksDataDiv.textContent = data.message || data.error || 'Erro ao carregar bancos';
+                }
+            } catch (err) {
+                banksDataDiv.textContent = 'Erro ao buscar bancos';
+            }
+        }
+
+        async function searchCNPJ() {
+            const cnpj = document.getElementById('cnpj-input').value.replace(/[^0-9]/g, ''); // Remove non-digits
+            const cnpjDataDiv = document.getElementById('cnpj-data');
+            cnpjDataDiv.textContent = 'Carregando...';
+            try {
+                const res = await fetch(`/brasilapi/cnpj/${cnpj}`);
+                const data = await res.json();
+                 if (res.ok) {
+                    cnpjDataDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                     cnpjDataDiv.textContent = data.message || data.error || 'CNPJ não encontrado';
+                 }
+            } catch (err) {
+                cnpjDataDiv.textContent = 'Erro ao buscar CNPJ';
+            }
+        }
+
+        async function loadRates() {
+            const ratesDataDiv = document.getElementById('rates-data');
+            ratesDataDiv.textContent = 'Carregando...';
+            try {
+                const res = await fetch('/brasilapi/taxas');
+                const data = await res.json();
+                 if (res.ok && Array.isArray(data)) {
+                    ratesDataDiv.innerHTML = data.map(rate => `<p><strong>${rate.nome}</strong> - Valor: ${rate.valor} (${rate.unidade})</p>`).join('');
+                 } else {
+                     ratesDataDiv.textContent = data.message || data.error || 'Erro ao carregar taxas';
+                 }
+            } catch (err) {
+                ratesDataDiv.textContent = 'Erro ao buscar taxas';
+            }
+        }
+
+         async function searchDominio() {
+            const dominio = document.getElementById('dominio-input').value.trim();
+            const dominioDataDiv = document.getElementById('dominio-data');
+            dominioDataDiv.textContent = 'Carregando...';
+             if (!dominio) {
+                 dominioDataDiv.textContent = 'Por favor, digite um domínio.';
+                 return;
+             }
+            try {
+                const res = await fetch(`/brasilapi/dominio/${dominio}`);
+                const data = await res.json();
+                 if (res.ok) {
+                    dominioDataDiv.textContent = JSON.stringify(data, null, 2);
+                 } else {
+                     dominioDataDiv.textContent = data.message || data.error || 'Domínio não encontrado';
+                 }
+            } catch (err) {
+                dominioDataDiv.textContent = 'Erro ao buscar domínio';
+            }
+        }
+
+        // Carrega os usuários ao carregar a página e atualiza a cada 5 segundos
+        loadUsers();
+        setInterval(loadUsers, 5000);
+
+    </script>
+</body>
+</html> 
