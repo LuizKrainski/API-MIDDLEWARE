@@ -246,6 +246,55 @@ app.get('/webhooks', async (req, res) => {
     }
 });
 
+// Endpoint para verificar status do banco de dados
+app.get('/db-status', async (req, res) => {
+    try {
+        // Verifica conexão com o banco
+        const client = await pool.connect();
+        
+        // Obtém estatísticas das tabelas
+        const usersStats = await client.query('SELECT COUNT(*) as total FROM users');
+        const webhooksStats = await client.query('SELECT COUNT(*) as total FROM webhooks');
+        
+        // Obtém o último webhook recebido
+        const lastWebhook = await client.query(
+            'SELECT event_type, created_at FROM webhooks ORDER BY created_at DESC LIMIT 1'
+        );
+
+        // Libera o cliente
+        client.release();
+
+        // Monta o objeto de resposta
+        const status = {
+            status: 'online',
+            timestamp: new Date().toISOString(),
+            database: {
+                connection: 'connected',
+                tables: {
+                    users: {
+                        total: parseInt(usersStats.rows[0].total)
+                    },
+                    webhooks: {
+                        total: parseInt(webhooksStats.rows[0].total),
+                        last_received: lastWebhook.rows[0] ? {
+                            event_type: lastWebhook.rows[0].event_type,
+                            created_at: lastWebhook.rows[0].created_at
+                        } : null
+                    }
+                }
+            }
+        };
+
+        res.json(status);
+    } catch (err) {
+        res.status(500).json({
+            status: 'error',
+            timestamp: new Date().toISOString(),
+            error: err.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`API rodando na porta ${port}`);
 }); 
