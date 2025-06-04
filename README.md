@@ -117,4 +117,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 📞 Suporte
 
-Para suporte, envie um email para [seu-email] ou abra uma issue no repositório. 
+Para suporte, envie um email para luiskrainski@outlook.com.br ou abra uma issue no repositório. 
