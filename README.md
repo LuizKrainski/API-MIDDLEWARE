@@ -36,7 +36,7 @@ npm install
 Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 ```env
 PORT=3000
-DATABASE_URL=postgresql://postgres:0186@localhost:5432/postgres
+DATABASE_URL=postgresql://postgres:[Senha]@localhost:5432/postgres
 COB_CLOUD_TOKEN_COMPANY=seu_token_company
 COB_CLOUD_TOKEN_CLIENT=seu_token_client
 ```
