@@ -19,8 +19,8 @@ app.use(express.json());
 
 // Configuração do PostgreSQL
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:0186@localhost:5432/postgres'
-});
+    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:SENHA@localhost:5432/postgres'
+});//TODO: Mude a sua senha aqui do seu banco
 
 // Criação da tabela refinada
 const createUsersTable = `
