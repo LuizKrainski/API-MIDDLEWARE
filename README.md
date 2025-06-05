@@ -1,120 +1,87 @@
-# COB Cloud API Middleware
+# API Middleware com Webhooks
 
-Este é um middleware que integra com a API do COB Cloud, fornecendo endpoints para gerenciamento de cobranças, devedores, títulos e outros recursos.
+API middleware para processamento de webhooks e integração com COB Cloud.
 
-## 🚀 Funcionalidades
+## Configuração Local
 
-- Listagem de devedores
-- Listagem de títulos
-- Listagem de ocorrências
-- Listagem de prestações
-- Listagem de devoluções
-- Webhook para recebimento de eventos
-
-## 📋 Pré-requisitos
-
-- Node.js (versão 14 ou superior)
-- PostgreSQL
-- Credenciais do COB Cloud:
-  - Token da Assessoria (token_company)
-  - Token do Cliente (token_client)
-
-## 🔧 Instalação
-
-1. Clone o repositório:
-```bash
-git clone [url-do-repositorio]
-cd api-middleware
-```
-
-2. Instale as dependências:
+1. Instale as dependências:
 ```bash
 npm install
 ```
 
-3. Configure as variáveis de ambiente:
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
-```env
-PORT=3000
-DATABASE_URL=postgresql://postgres:[Senha]@localhost:5432/postgres
-COB_CLOUD_TOKEN_COMPANY=seu_token_company
-COB_CLOUD_TOKEN_CLIENT=seu_token_client
-```
+2. Configure as variáveis de ambiente:
+   - Copie o arquivo `.env.example` para `.env`
+   - Preencha as variáveis necessárias no arquivo `.env`
 
-4. Inicie o servidor:
+## Deploy no Railway
+
+### 1. Preparação
+- Crie uma conta no [Railway](https://railway.app)
+- Instale o [Railway CLI](https://docs.railway.app/develop/cli) (opcional)
+
+### 2. Configuração do Projeto no Railway
+1. Crie um novo projeto no Railway
+2. Conecte seu repositório GitHub
+3. Configure as variáveis de ambiente no Railway:
+   - `DATABASE_URL`: URL do banco PostgreSQL (o Railway pode provisionar um para você)
+   - `COB_CLOUD_TOKEN_COMPANY`: Token da sua empresa
+   - `COB_CLOUD_TOKEN_CLIENT`: Token do cliente
+   - `PORT`: O Railway vai definir automaticamente
+
+### 3. Deploy
+1. Faça commit das alterações no seu repositório:
 ```bash
-npm start
+git add .
+git commit -m "Preparando para deploy no Railway"
+git push origin main
 ```
 
-## 📡 Endpoints
+2. O Railway detectará automaticamente as mudanças e iniciará o deploy
 
-### Listagem de Devedores
-```http
-GET /cli/devedores/listar
+### 4. Verificação do Deploy
+1. Após o deploy, o Railway fornecerá uma URL para sua aplicação
+2. Teste os endpoints:
+   - Status da API: `https://sua-url-railway.up.railway.app/db-status`
+   - Webhook: `https://sua-url-railway.up.railway.app/webhook`
+   - Lista de Webhooks: `https://sua-url-railway.up.railway.app/webhooks`
+
+### 5. Configuração do Webhook
+1. Atualize a URL do webhook no seu sistema para apontar para a nova URL do Railway
+2. Formato do payload para teste:
+```json
+{
+  "event_type": "titulo_criado",
+  "payload": {
+    "id": 123,
+    "valor": 1000.00,
+    "data_vencimento": "2024-03-20",
+    "status": "novo"
+  }
+}
 ```
 
-### Listagem de Títulos
-```http
-GET /cli/titulos/listar
-```
+### 6. Monitoramento
+- Acesse o dashboard do Railway para:
+  - Ver logs em tempo real
+  - Monitorar uso de recursos
+  - Verificar status do deploy
+  - Gerenciar variáveis de ambiente
 
-### Listagem de Ocorrências
-```http
-GET /cli/ocorrencias/listar
-```
+## Endpoints Disponíveis
 
-### Listagem de Prestações
-```http
-GET /cli/prestacoes/listar
-```
+- `GET /db-status`: Verifica o status do banco de dados
+- `POST /webhook`: Recebe webhooks
+- `GET /webhooks`: Lista webhooks recebidos
+- `GET /cli/devedores/listar`: Lista devedores
+- `GET /cli/titulos/listar`: Lista títulos
+- `GET /cli/ocorrencias/listar`: Lista ocorrências
+- `GET /cli/prestacoes/listar`: Lista prestações
+- `GET /cli/devolucoes/listar`: Lista devoluções
 
-### Listagem de Devoluções
-```http
-GET /cli/devolucoes/listar
-```
+## Suporte
 
-### Webhook
-```http
-POST /webhook
-```
-
-## 🔄 Webhook
-
-O sistema inclui um endpoint de webhook que pode receber eventos do COB Cloud. Para configurar:
-
-1. Configure a URL do webhook no painel do COB Cloud para apontar para:
-```
-http://seu-dominio/webhook
-```
-
-2. O webhook receberá eventos em formato JSON e os processará automaticamente.
-
-## 🔒 Segurança
-
-- Todos os endpoints são protegidos por autenticação via tokens
-- Os tokens são gerenciados de forma segura através de variáveis de ambiente
-- As requisições são validadas antes do processamento
-
-## 📝 Logs
-
-O sistema mantém logs de todas as requisições recebidas, incluindo:
-- Data e hora
-- Método HTTP
-- URL acessada
-- Status da resposta
-
-## 🤝 Contribuindo
-
-1. Faça um Fork do projeto
-2. Crie uma Branch para sua Feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a Branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 📞 Suporte
-
-Para suporte, envie um email para luiskrainski@outlook.com.br ou abra uma issue no repositório. 
+Em caso de problemas:
+1. Verifique os logs no Railway
+2. Confirme se todas as variáveis de ambiente estão configuradas
+3. Teste localmente antes de fazer deploy
+4. Verifique a conexão com o banco de dados 
