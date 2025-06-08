@@ -1,53 +1,72 @@
-# API Middleware com Webhooks
+# API Middleware
 
-API middleware para processamento de webhooks e integração com COB Cloud.
+Criado por: Luiz Henrique Krainski
 
-## Configuração Local
+## Descrição
+Esta é uma API middleware que integra com os serviços COB Cloud, fornecendo endpoints seguros para gerenciamento de devedores, títulos, ocorrências, prestações e devoluções. A API inclui suporte a webhooks para processamento de eventos em tempo real.
 
-1. Instale as dependências:
+## Recursos de Segurança
+- Limitação de taxa para prevenir abusos
+- Validação e sanitização de entrada
+- Cabeçalhos de segurança (Helmet)
+- Proteção CORS
+- Limites de tamanho de requisição
+- Tratamento de erros aprimorado
+- Logging seguro
+
+## Pré-requisitos
+- Node.js >= 14.0.0
+- Banco de dados PostgreSQL
+- Credenciais da API COB Cloud
+
+## Variáveis de Ambiente
+Crie um arquivo `.env` com as seguintes variáveis:
+```
+PORT=3000
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/banco
+COB_CLOUD_TOKEN_COMPANY=seu_token_empresa
+COB_CLOUD_TOKEN_CLIENT=seu_token_cliente
+ALLOWED_ORIGINS=http://localhost:3000,https://seudominio.com
+NODE_ENV=development
+```
+
+## Instalação
+1. Clone o repositório
+2. Instale as dependências:
 ```bash
 npm install
 ```
-
-2. Configure as variáveis de ambiente:
-   - Copie o arquivo `.env.example` para `.env`
-   - Preencha as variáveis necessárias no arquivo `.env`
-
-## Deploy no Railway
-
-### 1. Preparação
-- Crie uma conta no [Railway](https://railway.app)
-- Instale o [Railway CLI](https://docs.railway.app/develop/cli) (opcional)
-
-### 2. Configuração do Projeto no Railway
-1. Crie um novo projeto no Railway
-2. Conecte seu repositório GitHub
-3. Configure as variáveis de ambiente no Railway:
-   - `DATABASE_URL`: URL do banco PostgreSQL (o Railway pode provisionar um para você)
-   - `COB_CLOUD_TOKEN_COMPANY`: Token da sua empresa
-   - `COB_CLOUD_TOKEN_CLIENT`: Token do cliente
-   - `PORT`: O Railway vai definir automaticamente
-
-### 3. Deploy
-1. Faça commit das alterações no seu repositório:
+3. Configure suas variáveis de ambiente
+4. Inicie o servidor:
 ```bash
-git add .
-git commit -m "Preparando para deploy no Railway"
-git push origin main
+npm start
 ```
 
-2. O Railway detectará automaticamente as mudanças e iniciará o deploy
+## Endpoints da API
 
-### 4. Verificação do Deploy
-1. Após o deploy, o Railway fornecerá uma URL para sua aplicação
-2. Teste os endpoints:
-   - Status da API: `https://sua-url-railway.up.railway.app/db-status`
-   - Webhook: `https://sua-url-railway.up.railway.app/webhook`
-   - Lista de Webhooks: `https://sua-url-railway.up.railway.app/webhooks`
+### Endpoints que Requerem Autenticação
+- GET `/cli/devedores/listar` - Lista devedores
+- GET `/cli/titulos/listar` - Lista títulos
+- GET `/cli/ocorrencias/listar` - Lista ocorrências
+- GET `/cli/prestacoes/listar` - Lista prestações
+- GET `/cli/devolucoes/listar` - Lista devoluções
 
-### 5. Configuração do Webhook
-1. Atualize a URL do webhook no seu sistema para apontar para a nova URL do Railway
-2. Formato do payload para teste:
+### Endpoints de Webhook
+- POST `/webhook` - Recebe eventos de webhook
+- GET `/webhooks` - Lista webhooks recebidos
+
+### Endpoints do Sistema
+- GET `/db-status` - Verifica status do banco de dados
+
+## Considerações de Segurança
+- Todos os endpoints são protegidos por limitação de taxa
+- Validação de entrada é aplicada em todos os endpoints
+- Dados sensíveis não são registrados em logs
+- CORS está configurado para permitir apenas origens específicas
+- Payloads de requisição são limitados para prevenir abusos
+
+## Estrutura do Webhook
+Exemplo de payload para teste:
 ```json
 {
   "event_type": "titulo_criado",
@@ -60,28 +79,17 @@ git push origin main
 }
 ```
 
-### 6. Monitoramento
-- Acesse o dashboard do Railway para:
-  - Ver logs em tempo real
-  - Monitorar uso de recursos
-  - Verificar status do deploy
-  - Gerenciar variáveis de ambiente
-
-## Endpoints Disponíveis
-
-- `GET /db-status`: Verifica o status do banco de dados
-- `POST /webhook`: Recebe webhooks
-- `GET /webhooks`: Lista webhooks recebidos
-- `GET /cli/devedores/listar`: Lista devedores
-- `GET /cli/titulos/listar`: Lista títulos
-- `GET /cli/ocorrencias/listar`: Lista ocorrências
-- `GET /cli/prestacoes/listar`: Lista prestações
-- `GET /cli/devolucoes/listar`: Lista devoluções
+## Monitoramento
+- Logs detalhados de todas as requisições
+- Rastreamento de tempo de resposta
+- Monitoramento de erros
+- Status do banco de dados
 
 ## Suporte
+Para suporte ou dúvidas, entre em contato com o autor.
 
-Em caso de problemas:
-1. Verifique os logs no Railway
-2. Confirme se todas as variáveis de ambiente estão configuradas
-3. Teste localmente antes de fazer deploy
-4. Verifique a conexão com o banco de dados 
+## Licença
+MIT License
+
+## Autor
+Luiz Henrique Krainski 

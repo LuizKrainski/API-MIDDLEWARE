@@ -1,21 +1,52 @@
+/**
+ * API Middleware
+ * Criado por: Luiz Henrique Krainski
+ * Versão: 1.0.0
+ * Descrição: API Middleware para integração com COB Cloud
+ */
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const path = require('path');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware simples de log
+// Middleware de segurança
+app.use(helmet()); // Adiciona vários cabeçalhos HTTP para segurança
+app.use(express.json({ limit: '10kb' })); // Limita o tamanho do payload
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Limitação de taxa
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100 // limite de 100 requisições por IP por janela
+});
+app.use(limiter);
+
+// Configuração CORS
+const corsOptions = {
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'token_company', 'token_client'],
+    credentials: true
+};
+app.use(cors(corsOptions));
+
+// Middleware de logging aprimorado
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} ${res.statusCode} ${duration}ms`);
+    });
     next();
 });
-
-app.use(cors());
-app.use(express.json());
 
 // Configuração do PostgreSQL
 const pool = new Pool({
@@ -293,6 +324,44 @@ app.get('/db-status', async (req, res) => {
             error: err.message
         });
     }
+});
+
+// Middleware de tratamento de erros
+app.use((err, req, res, next) => {
+    console.error('Erro não tratado:', err);
+    res.status(500).json({
+        error: 'Erro Interno do Servidor',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Ocorreu um erro inesperado'
+    });
+});
+
+// Middleware de validação de entrada
+const validateWebhookPayload = (req, res, next) => {
+    const { event_type, payload } = req.body;
+    
+    if (!event_type || typeof event_type !== 'string') {
+        return res.status(400).json({ error: 'Tipo de evento inválido' });
+    }
+    
+    if (!payload || typeof payload !== 'object') {
+        return res.status(400).json({ error: 'Payload inválido' });
+    }
+    
+    next();
+};
+
+// Aplica validação ao endpoint de webhook
+app.post('/webhook', validateWebhookPayload, async (req, res) => {
+    // ... existing webhook code ...
+});
+
+// Adiciona cabeçalhos de segurança a todas as respostas
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
 });
 
 app.listen(port, () => {
